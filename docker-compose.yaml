@@ -1,0 +1,46 @@
+version: "3.0"
+  
+services:
+  mandala:
+    image: acala/mandala-node
+    container_name: mandala
+    user: root
+    ports:
+      - 9933:9933 # rpc port
+      - 9944:9944 # ws port
+      - 30333:30333 # p2p port
+    restart: always
+    volumes:
+      - ./data:/mandala/data
+    command:
+      [
+        "--chain",
+        "mandala",
+        "--base-path",
+        "/mandala/data",
+        "--pruning",
+        "archive",
+        "--ws-external",
+        "--rpc-external",
+        "--rpc-cors",
+        "all",
+        "--execution",
+        "wasm"
+      ]
+  eth-rpc-adapter:
+    image: acala/eth-rpc-adapter:2e19179
+    container_name: eth-rpc-adapter
+    ports:
+      - 8545:8545 # rpc port
+      - 8546:8546 # ws port
+    depends_on:
+      - mandala
+    restart: always
+    environment:
+      WS_PORT: 8546
+      HTTP_PORT: 8545
+      ENDPOINT_URL: ws://mandala:9944
+    command: yarn start
+networks:
+  default:
+    name: mandala
